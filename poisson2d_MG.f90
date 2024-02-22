@@ -15,6 +15,7 @@
 !            www.cfdlab.org
 ! 
 ! Last updated: Oct. 29, 2015
+! updated by Chunye Gong, 2024.02.22
 !-----------------------------------------------------------------------------!
 
 program poisson2d
@@ -22,7 +23,7 @@ implicit none
 integer::i,j,nx,ny,isolver
 real*8,dimension(:,:),allocatable ::u,f,ue,e
 real*8,dimension(:),allocatable ::x,y
-real*8 ::dx,dy,tol,rms,x0,xL,y0,yL
+real*8 :: dx,dy,tol,rms,x0,xL,y0,yL
 
 !Domain
 x0 =-1.0d0 !left
@@ -42,12 +43,12 @@ dy = (yL-y0)/dfloat(ny)
 !spatial coordinates 
 allocate(x(0:nx))
 do i=0,nx
-x(i) = x0 + dfloat(i)*dx
+	x(i) = x0 + dfloat(i)*dx
 end do
 
 allocate(y(0:ny))
 do j=0,ny
-y(j) = y0 + dfloat(j)*dy
+	y(j) = y0 + dfloat(j)*dy
 end do
 
 
@@ -68,8 +69,8 @@ allocate(ue(0:nx,0:ny))
 !---------------------------------------------!
 do j=0,ny
 do i=0,nx
-f(i,j) =-2.0d0*(2.0d0-x(i)*x(i)-y(j)*y(j))
-ue(i,j)= (x(i)*x(i)-1.0d0)*(y(j)*y(j)-1.0d0)
+	f(i,j) =-2.0d0*(2.0d0-x(i)*x(i)-y(j)*y(j))
+	ue(i,j)= (x(i)*x(i)-1.0d0)*(y(j)*y(j)-1.0d0)
 end do
 end do
 
@@ -77,19 +78,19 @@ end do
 !Numerical solution:
 do i=0,nx
 do j=0,ny
-u(i,j)=0.0d0
+	u(i,j)=0.0d0
 end do
 end do
 
 !Boundary conditions has to satisfy exact solution
 do i=0,nx
-u(i,0)  = ue(i,0)	
-u(i,ny) = ue(i,ny)					  					  	
+	u(i,0)  = ue(i,0)	
+	u(i,ny) = ue(i,ny)					  					  	
 end do
 
 do j=0,ny
-u(0,j)  = ue(0,j)		
-u(nx,j) = ue(nx,j)						  	
+	u(0,j)  = ue(0,j)		
+	u(nx,j) = ue(nx,j)						  	
 end do
 
 
@@ -107,11 +108,11 @@ end if
 
 
 !----------------------!
-!Error analysis:
+!Error analysis:，跟精确解比较是对的。
 !----------------------!
 do i=0,nx
 do j=0,ny
-e(i,j) = dabs(u(i,j)-ue(i,j))
+	e(i,j) = dabs(u(i,j)-ue(i,j))
 end do 
 end do
 
@@ -133,7 +134,7 @@ write(10,*) 'variables ="x","y","f","u","ue"'
 write(10,*)'zone f=point i=',nx+1,',j=',ny+1
 do j=0,ny
 do i=0,nx
-write(10,*) x(i),y(j),f(i,j),u(i,j),ue(i,j)
+	write(10,*) x(i),y(j),f(i,j),u(i,j),ue(i,j)
 end do
 end do
 close(10)
@@ -146,7 +147,7 @@ end
 
 !---------------------------------------------------------------------------!
 !Relaxation formula for Poisson equation
-!Uses GS relaxation
+!Uses GS relaxation，自迭代，确实就是GS迭代。那么对三维应该也是对的啊？
 !Works for Drichlet boundary conditions (Boundary points never updated)
 !---------------------------------------------------------------------------!
 SUBROUTINE relax(nx,ny,dx,dy,f,u)
@@ -161,7 +162,7 @@ a = -2.0d0/(dx*dx) - 2.0d0/(dy*dy)
   
 do i=1,nx-1
 do j=1,ny-1
-u(i,j) = (1.0d0/a)*(f(i,j) &
+	u(i,j) = (1.0d0/a)*(f(i,j) &
                    - (u(i+1,j)+u(i-1,j))/(dx*dx) &
                    - (u(i,j+1)+u(i,j-1))/(dy*dy) )
 end do
@@ -173,7 +174,7 @@ end
 
 
 !---------------------------------------------------------------------------!
-!Residual formula for Poisson equation
+!Residual formula for Poisson equation，残差是左端项减去右端项
 !Works for Drichlet boundary conditions (Boundary points never updated)
 !---------------------------------------------------------------------------!
 SUBROUTINE resid(nx,ny,dx,dy,f,u,r)
@@ -190,22 +191,23 @@ r(i,j) = f(i,j) - (u(i+1,j) - 2.0d0*u(i,j) + u(i-1,j))/(dx*dx) &
 end do
 end do
 
-!Boundary conditions for residuals
+!Boundary conditions for residuals，还要处理一下边界？不处理行吗？
+!本问题可以，其他问题未必可以
 do i=0,nx
-r(i,0)  = 0.0d0	
-r(i,ny) = 0.0d0					  					  	
+	r(i,0)  = 0.0d0	
+	r(i,ny) = 0.0d0					  					  	
 end do
 
 do j=0,ny
-r(0,j)  = 0.0d0		
-r(nx,j) = 0.0d0						  	
+	r(0,j)  = 0.0d0		
+	r(nx,j) = 0.0d0						  	
 end do
 
 return
 end
 
 !---------------------------------------------------------------------------!
-!Compute L2-norm for an array
+!Compute L2-norm for an array，平方和开根号
 !---------------------------------------------------------------------------!
 SUBROUTINE l2norm(nx,ny,r,rms)
 implicit none
@@ -217,7 +219,7 @@ real*8 ::rms
 rms=0.0d0
 do i=1,nx-1
 do j=1,ny-1
-rms = rms + r(i,j)*r(i,j)
+	rms = rms + r(i,j)*r(i,j)
 end do 
 end do
 rms= dsqrt(rms/dfloat((nx-1)*(ny-1)))
@@ -227,9 +229,13 @@ end
 
 
 !---------------------------------------------------------------------------!
-!Restriction operators
+!Restriction operators,f2c,从更多网格到少量网格，所以是限制
+!把残差u赋值给右端项f。还有多种限制器：
+!（1）简单的直接插值。
+!（2）取前后左右4个点，加上中间点*4取平均值。5点格式 
+!（3）9点格式
 !---------------------------------------------------------------------------!
-SUBROUTINE rest(nxf,nyf,nxh,nyh,r,f)
+SUBROUTINE restrict(nxf,nyf,nxh,nyh,r,f)
 implicit none
 integer::nxf,nyf,nxh,nyh
 real*8, dimension(0:nxf,0:nyf)::r	!on higher grid
@@ -237,31 +243,30 @@ real*8, dimension(0:nxh,0:nyh)::f	!on lower grid
 integer::i,j
 integer::ireo
 
-ireo = 3
+ireo = 2
 
 if (ireo.eq.1) then !simply injection
 
-do i=1,nxh-1
-do j=1,nyh-1
-f(i,j) = r(2*i,2*j) 							  	
-end do
-end do
+	do i=1,nxh-1
+	do j=1,nyh-1
+		f(i,j) = r(2*i,2*j) 							  	
+	end do
+	end do
 
 else if (ireo.eq.2) then !half-weight
 
-do i=1,nxh-1
-do j=1,nyh-1
-f(i,j) = 1.0d0/8.0d0*( 4.0d0*r(2*i,2*j) &
-	     + 1.0d0*(r(2*i+1,2*j)+r(2*i-1,2*j)+r(2*i,2*j+1)+r(2*i,2*j-1)) )							  	
-end do
-end do
-
+	do i=1,nxh-1
+	do j=1,nyh-1
+		f(i,j) = 1.0d0/8.0d0*( 4.0d0*r(2*i,2*j) &
+			 + 1.0d0*(r(2*i+1,2*j)+r(2*i-1,2*j)+r(2*i,2*j+1)+r(2*i,2*j-1)) )							  	
+	end do
+	end do
 
 else !full-weight (trapezoidal)
 
 do i=1,nxh-1
 do j=1,nyh-1
-f(i,j) = 1.0d0/16.0d0*( 4.0d0*r(2*i,2*j) &
+	f(i,j) = 1.0d0/16.0d0*( 4.0d0*r(2*i,2*j) &
 	     + 2.0d0*(r(2*i+1,2*j)+r(2*i-1,2*j)+r(2*i,2*j+1)+r(2*i,2*j-1)) &
 	     + 1.0d0*(r(2*i+1,2*j+1)+r(2*i-1,2*j-1)+r(2*i-1,2*j+1)+r(2*i+1,2*j-1)))							  	
 end do
@@ -270,15 +275,15 @@ end do
 end if
 
 
-!update boundaries
+!update boundaries,还要进行边界更新，对的。这个好像忘记了
 do i=0,nxh
-f(i,0)   = r(2*i,0) 	
-f(i,nyh) = r(2*i,nyf) 					  					  	
+	f(i,0)   = r(2*i,0) 	
+	f(i,nyh) = r(2*i,nyf) 					  					  	
 end do
 
 do j=0,nyh
-f(0,j)   = r(0,2*j)		
-f(nxh,j) = r(nxf,2*j)						  	
+	f(0,j)   = r(0,2*j)		
+	f(nxh,j) = r(nxf,2*j)						  	
 end do
 
   
@@ -287,7 +292,7 @@ end
 
 
 !---------------------------------------------------------------------------!
-!Prolongation operator
+!Prolongation operator，粗网格往细网格上插值，c2f
 !bilinear interpolation
 !---------------------------------------------------------------------------!
 SUBROUTINE prol(nxh,nyh,nxf,nyf,u,p)
@@ -300,18 +305,19 @@ integer::i,j
 
 do i=0,nxh-1
 do j=0,nyh-1
-p(2*i,2*j)    = u(i,j)
-p(2*i+1,2*j)  = 1.0d0/2.0d0*(u(i,j)+u(i+1,j))
-p(2*i,2*j+1)  = 1.0d0/2.0d0*(u(i,j)+u(i,j+1))
-p(2*i+1,2*j+1)= 1.0d0/4.0d0*(u(i,j)+u(i,j+1)+u(i+1,j)+u(i+1,j+1))
+	p(2*i,2*j)    = u(i,j)
+	p(2*i+1,2*j)  = 1.0d0/2.0d0*(u(i,j)+u(i+1,j))
+	p(2*i,2*j+1)  = 1.0d0/2.0d0*(u(i,j)+u(i,j+1))
+	p(2*i+1,2*j+1)= 1.0d0/4.0d0*(u(i,j)+u(i,j+1)+u(i+1,j)+u(i+1,j+1))
 end do
 end do
 
+!还要处理一下边界
 do j=0,nyh
-p(nxf,2*j)    = u(nxh,j)
+	p(nxf,2*j)    = u(nxh,j)
 end do
 do i=0,nxh
-p(2*i,nyf)    = u(i,nyh)
+	p(2*i,nyf)    = u(i,nyh)
 end do
 
 return
@@ -356,7 +362,7 @@ do k=1,nI
 
     ! Write residual history
 	write(66,*) k,rms,rms/rms0
-    write(*,*) k,rms,rms/rms0     
+    if(mod(k,400)==0)write(*,*) k,rms,rms/rms0     
 end do
 
 10 continue
@@ -404,7 +410,7 @@ v1 = 2   	!number of relaxation for restriction in V-cycle
 v2 = 2   	!number of relaxation for prolongation in V-cycle
 v3 = 100 	!number of relaxation at coarsest level
 
-
+!正好是2的幂次方
 dx2=dx*2.0d0
 dy2=dy*2.0d0
 
@@ -432,8 +438,8 @@ ny5=ny/16
 me = 0
 
 if (nx5.lt.2.or.ny5.lt.2) then
-write(*,*)"5 level is high for this grid.."
-stop
+	write(*,*)"5 level is high for this grid.."
+	stop
 end if
 
 allocate(r (0:nx ,0:ny))
@@ -466,173 +472,175 @@ call l2norm(nx,ny,r,rms0)
 open(66,file='residual.plt')
 write(66,*) 'variables ="k","rms","rms/rms0"'
 
+!几次迭代写得很清楚，不优美，但是很直观了。
 
 do k=1,nI
 
-!1.Relax v1 times
-do m=1,v1
-call relax(nx,ny,dx,dy,f,u)			
-end do
+	!1.Relax v1 times
+	do m=1,v1
+		call relax(nx,ny,dx,dy,f,u)			
+	end do
 
-! Compute residual
-call resid(nx,ny,dx,dy,f,u,r)
+	! Compute residual
+	call resid(nx,ny,dx,dy,f,u,r)
 
-! Check for convergence on finest grid	
-call l2norm(nx,ny,r,rms)
-write(66,*) k,rms,rms/rms0  
-write(*,*) k,rms,rms/rms0 
-if (rms/rms0.le.tol) goto 10
+	! Check for convergence on finest grid	
+	call l2norm(nx,ny,r,rms)
+	write(66,*) k,rms,rms/rms0  
+	write(*,*) k,rms,rms/rms0 
+	if (rms/rms0.le.tol) goto 10
 
-!1r.Restriction	
-call rest(nx,ny,nx2,ny2,r,f2)
+	!1r.Restriction	，把残差做右端项，而不是求解量，感觉我前面搞错了
+	! f2c,r->f2
+	call restrict(nx,ny,nx2,ny2,r,f2)
 
-!Set zero
-do i=0,nx2
-do j=0,ny2
-u2(i,j)=0.0d0
-end do
-end do
-
-
-!2.Relax v1 times
-do m=1,v1
-call relax(nx2,ny2,dx2,dy2,f2,u2)
-end do
-
-! Compute residual
-call resid(nx2,ny2,dx2,dy2,f2,u2,r2)
-
-!2r.Restriction
-call rest(nx2,ny2,nx3,ny3,r2,f3)
+	!Set zero, 初值
+	do i=0,nx2
+	do j=0,ny2
+		u2(i,j)=0.0d0
+	end do
+	end do
 
 
-!Set zero
-do i=0,nx3
-do j=0,ny3
-u3(i,j)=0.0d0
-end do
-end do
+	!2.Relax v1 times,根据右端项计算u2
+	do m=1,v1
+		call relax(nx2,ny2,dx2,dy2,f2,u2)
+	end do
+
+	! Compute residual
+	call resid(nx2,ny2,dx2,dy2,f2,u2,r2)
+
+	!2r.Restriction
+	call restrict(nx2,ny2,nx3,ny3,r2,f3)
 
 
-!3.Relax v1 times
-do m=1,v1
-call relax(nx3,ny3,dx3,dy3,f3,u3)
-end do
-
-! Compute residual
-call resid(nx3,ny3,dx3,dy3,f3,u3,r3)
-
-
-!3r.Restriction
-call rest(nx3,ny3,nx4,ny4,r3,f4)
+	!Set zero
+	do i=0,nx3
+	do j=0,ny3
+		u3(i,j)=0.0d0
+	end do
+	end do
 
 
-!Set zero
-do i=0,nx4
-do j=0,ny4
-u4(i,j)=0.0d0
-end do
-end do
+	!3.Relax v1 times
+	do m=1,v1
+		call relax(nx3,ny3,dx3,dy3,f3,u3)
+	end do
 
-!4.Relax v1 times
-do m=1,v1
-call relax(nx4,ny4,dx4,dy4,f4,u4)
-end do
+	! Compute residual
+	call resid(nx3,ny3,dx3,dy3,f3,u3,r3)
 
 
-! Compute residual
-call resid(nx4,ny4,dx4,dy4,f4,u4,r4)
+	!3r.Restriction
+	call restrict(nx3,ny3,nx4,ny4,r3,f4)
 
 
-!4r.Restriction
-call rest(nx4,ny4,nx5,ny5,r4,f5)
+	!Set zero
+	do i=0,nx4
+	do j=0,ny4
+	u4(i,j)=0.0d0
+	end do
+	end do
+
+	!4.Relax v1 times
+	do m=1,v1
+	call relax(nx4,ny4,dx4,dy4,f4,u4)
+	end do
 
 
-!Set zero
-do i=0,nx5
-do j=0,ny5
-u5(i,j)=0.0d0
-end do
-end do
-
-!5.Relax v3 times (or it can be solved exactly)
-!call initial residual:
-	call resid(nx5,ny5,dx5,dy5,f5,u5,r5)
-	call l2norm(nx5,ny5,r5,rmsc)
-do m=1,v3
-	call relax(nx5,ny5,dx5,dy5,f5,u5)
-	call resid(nx5,ny5,dx5,dy5,f5,u5,r5)
-	! Check for convergence on smallest grid	
-	call l2norm(nx5,ny5,r5,rms)
-	if (rms/rmsc.le.tol) goto 11
-end do
-	11 continue
-
-me = me + m
-
-!4p.Prolongation
-call prol(nx5,ny5,nx4,ny4,u5,p4)
+	! Compute residual
+	call resid(nx4,ny4,dx4,dy4,f4,u4,r4)
 
 
-!Correct
-do i=1,nx4-1
-do j=1,ny4-1
-u4(i,j) = u4(i,j) + p4(i,j)
-end do
-end do
-
-!4.Relax v2 times
-do m=1,v2
-call relax(nx4,ny4,dx4,dy4,f4,u4)
-end do
-
-!3p.Prolongation
-call prol(nx4,ny4,nx3,ny3,u4,p3)
-
-!Correct
-do i=1,nx3-1
-do j=1,ny3-1
-u3(i,j) = u3(i,j) + p3(i,j)
-end do
-end do
-
-!3.Relax v2 times
-do m=1,v2
-call relax(nx3,ny3,dx3,dy3,f3,u3)
-end do
-
-!2p.Prolongation
-call prol(nx3,ny3,nx2,ny2,u3,p2)
+	!4r.Restriction
+	call restrict(nx4,ny4,nx5,ny5,r4,f5)
 
 
-!Correct
-do i=1,nx2-1
-do j=1,ny2-1
-u2(i,j) = u2(i,j) + p2(i,j)
-end do
-end do
+	!Set zero
+	do i=0,nx5
+	do j=0,ny5
+		u5(i,j)=0.0d0
+	end do
+	end do
 
-!2.Relax v2 times
-do m=1,v2
-call relax(nx2,ny2,dx2,dy2,f2,u2)
-end do
+	!5.Relax v3 times (or it can be solved exactly)
+	!call initial residual:
+		call resid(nx5,ny5,dx5,dy5,f5,u5,r5)
+		call l2norm(nx5,ny5,r5,rmsc)
+	do m=1,v3
+		call relax(nx5,ny5,dx5,dy5,f5,u5)
+		call resid(nx5,ny5,dx5,dy5,f5,u5,r5)
+		! Check for convergence on smallest grid	
+		call l2norm(nx5,ny5,r5,rms)
+		if (rms/rmsc.le.tol) goto 11
+	end do
+		11 continue
 
-!1p.Prolongation
-call prol(nx2,ny2,nx,ny,u2,p)
+	me = me + m
+
+	!4p.Prolongation
+	call prol(nx5,ny5,nx4,ny4,u5,p4)
 
 
-!Correct
-do i=1,nx-1
-do j=1,ny-1
-u(i,j) = u(i,j) + p(i,j)
-end do
-end do
+	!Correct
+	do i=1,nx4-1
+	do j=1,ny4-1
+	u4(i,j) = u4(i,j) + p4(i,j)
+	end do
+	end do
+
+	!4.Relax v2 times
+	do m=1,v2
+	call relax(nx4,ny4,dx4,dy4,f4,u4)
+	end do
+
+	!3p.Prolongation
+	call prol(nx4,ny4,nx3,ny3,u4,p3)
+
+	!Correct
+	do i=1,nx3-1
+	do j=1,ny3-1
+	u3(i,j) = u3(i,j) + p3(i,j)
+	end do
+	end do
+
+	!3.Relax v2 times
+	do m=1,v2
+	call relax(nx3,ny3,dx3,dy3,f3,u3)
+	end do
+
+	!2p.Prolongation
+	call prol(nx3,ny3,nx2,ny2,u3,p2)
 
 
-!1.Relax v2 times
-do m=1,v2
-call relax(nx,ny,dx,dy,f,u)
-end do
+	!Correct
+	do i=1,nx2-1
+	do j=1,ny2-1
+	u2(i,j) = u2(i,j) + p2(i,j)
+	end do
+	end do
+
+	!2.Relax v2 times
+	do m=1,v2
+	call relax(nx2,ny2,dx2,dy2,f2,u2)
+	end do
+
+	!1p.Prolongation
+	call prol(nx2,ny2,nx,ny,u2,p)
+
+
+	!Correct
+	do i=1,nx-1
+	do j=1,ny-1
+	u(i,j) = u(i,j) + p(i,j)
+	end do
+	end do
+
+
+	!1.Relax v2 times
+	do m=1,v2
+	call relax(nx,ny,dx,dy,f,u)
+	end do
 
 end do	! Outer iteration loop
 
